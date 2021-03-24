@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Main entry point to the Auth0 SDK
  *
@@ -298,10 +299,10 @@ class Auth0
         $this->enablePkce    = $config['enable_pkce'] ?? false;
         $this->maxAge        = $config['max_age'] ?? null;
         $this->idTokenLeeway = $config['id_token_leeway'] ?? null;
-        $this->jwksUri       = $config['jwks_uri'] ?? 'https://'.$this->domain.'/.well-known/jwks.json';
+        $this->jwksUri       = $config['jwks_uri'] ?? 'https://' . $this->domain . '/.well-known/jwks.json';
 
         $this->idTokenAlg = $config['id_token_alg'] ?? 'RS256';
-        if (! in_array( $this->idTokenAlg, ['HS256', 'RS256'] )) {
+        if (!in_array($this->idTokenAlg, ['HS256', 'RS256'])) {
             throw new CoreException('Invalid id_token_alg; must be "HS256" or "RS256"');
         }
 
@@ -311,17 +312,17 @@ class Auth0
         }
 
         // Access token is not persisted by default.
-        if (! isset($config['persist_access_token']) || false === $config['persist_access_token']) {
+        if (!isset($config['persist_access_token']) || false === $config['persist_access_token']) {
             $this->dontPersist('access_token');
         }
 
         // Refresh token is not persisted by default.
-        if (! isset($config['persist_refresh_token']) || false === $config['persist_refresh_token']) {
+        if (!isset($config['persist_refresh_token']) || false === $config['persist_refresh_token']) {
             $this->dontPersist('refresh_token');
         }
 
         // ID token is not persisted by default.
-        if (! isset($config['persist_id_token']) || false === $config['persist_id_token']) {
+        if (!isset($config['persist_id_token']) || false === $config['persist_id_token']) {
             $this->dontPersist('id_token');
         }
 
@@ -329,13 +330,13 @@ class Auth0
         if (empty($this->persistantMap)) {
             // No need for storage, nothing to persist.
             $this->store = new EmptyStore();
-        } else if (! $this->store instanceof StoreInterface) {
+        } else if (!$this->store instanceof StoreInterface) {
             // Need to have some kind of storage if user data needs to be persisted.
             $this->store = new SessionStore();
         }
 
         $transientStore = $config['transient_store'] ?? null;
-        if (! $transientStore instanceof StoreInterface) {
+        if (!$transientStore instanceof StoreInterface) {
             $transientStore = new CookieStore([
                 // Use configuration option or class default.
                 'legacy_samesite_none' => $config['legacy_samesite_none_cookie'] ?? null,
@@ -343,10 +344,10 @@ class Auth0
             ]);
         }
 
-        $this->transientHandler = new TransientStoreHandler( $transientStore );
+        $this->transientHandler = new TransientStoreHandler($transientStore);
 
         $this->cacheHandler = $config['cache_handler'] ?? null;
-        if (! $this->cacheHandler instanceof CacheInterface) {
+        if (!$this->cacheHandler instanceof CacheInterface) {
             $this->cacheHandler = new NoCacheHandler();
         }
 
@@ -390,13 +391,13 @@ class Auth0
             $params['connection'] = $connection;
         }
 
-        if (! empty($additionalParams) && is_array($additionalParams)) {
+        if (!empty($additionalParams) && is_array($additionalParams)) {
             $params = array_replace($params, $additionalParams);
         }
 
         $login_url = $this->getLoginUrl($params);
 
-        header('Location: '.$login_url);
+        header('Location: ' . $login_url);
         exit;
     }
 
@@ -418,10 +419,10 @@ class Auth0
             'max_age' => $this->maxAge,
         ];
 
-        $auth_params = array_replace( $default_params, $params );
-        $auth_params = array_filter( $auth_params );
+        $auth_params = array_replace($default_params, $params);
+        $auth_params = array_filter($auth_params);
 
-        if (empty( $auth_params[self::TRANSIENT_STATE_KEY] )) {
+        if (empty($auth_params[self::TRANSIENT_STATE_KEY])) {
             // No state provided by application so generate, store, and send one.
             $auth_params[self::TRANSIENT_STATE_KEY] = $this->transientHandler->issue(self::TRANSIENT_STATE_KEY);
         } else {
@@ -430,7 +431,7 @@ class Auth0
         }
 
         // ID token nonce validation is required so auth params must include one.
-        if (empty( $auth_params[self::TRANSIENT_NONCE_KEY] )) {
+        if (empty($auth_params[self::TRANSIENT_NONCE_KEY])) {
             $auth_params[self::TRANSIENT_NONCE_KEY] = $this->transientHandler->issue(self::TRANSIENT_NONCE_KEY);
         } else {
             $this->transientHandler->store(self::TRANSIENT_NONCE_KEY, $auth_params[self::TRANSIENT_NONCE_KEY]);
@@ -446,7 +447,7 @@ class Auth0
         }
 
         if (isset($auth_params['max_age'])) {
-            $this->transientHandler->store( 'max_age', $auth_params['max_age'] );
+            $this->transientHandler->store('max_age', $auth_params['max_age']);
         }
 
         return $this->authentication->get_authorize_link(
@@ -468,7 +469,7 @@ class Auth0
      */
     public function getUser()
     {
-        if (! $this->user) {
+        if (!$this->user) {
             $this->exchange();
         }
 
@@ -485,7 +486,7 @@ class Auth0
      */
     public function getAccessToken()
     {
-        if (! $this->accessToken) {
+        if (!$this->accessToken) {
             $this->exchange();
         }
 
@@ -502,7 +503,7 @@ class Auth0
      */
     public function getIdToken()
     {
-        if (! $this->idToken) {
+        if (!$this->idToken) {
             $this->exchange();
         }
 
@@ -519,7 +520,7 @@ class Auth0
      */
     public function getRefreshToken()
     {
-        if (! $this->refreshToken) {
+        if (!$this->refreshToken) {
             $this->exchange();
         }
 
@@ -541,19 +542,19 @@ class Auth0
     public function exchange()
     {
         $code = $this->getAuthorizationCode();
-        if (! $code) {
+        if (!$code) {
             return false;
         }
 
         $state = $this->getState();
-        if (! $state || ! $this->transientHandler->verify(self::TRANSIENT_STATE_KEY, $state)) {
+        if (!$state || !$this->transientHandler->verify(self::TRANSIENT_STATE_KEY, $state)) {
             throw new CoreException('Invalid state');
         }
 
         $code_verifier = null;
         if ($this->enablePkce) {
             $code_verifier = $this->transientHandler->getOnce(self::TRANSIENT_CODE_VERIFIER_KEY);
-            if (! $code_verifier) {
+            if (!$code_verifier) {
                 throw new CoreException('Missing code_verifier');
             }
         }
@@ -575,7 +576,7 @@ class Auth0
         }
 
         if (isset($response['id_token'])) {
-            if (! $this->transientHandler->isset(self::TRANSIENT_NONCE_KEY)) {
+            if (!$this->transientHandler->isset(self::TRANSIENT_NONCE_KEY)) {
                 throw new InvalidTokenException('Nonce value not found in application store');
             }
 
@@ -608,11 +609,11 @@ class Auth0
      */
     public function renewTokens(array $options = [])
     {
-        if (! $this->refreshToken) {
+        if (!$this->refreshToken) {
             throw new CoreException('Can\'t renew the access token if there isn\'t a refresh token available');
         }
 
-        $response = $this->authentication->refresh_token( $this->refreshToken, $options );
+        $response = $this->authentication->refresh_token($this->refreshToken, $options);
 
         if (empty($response['access_token'])) {
             throw new ApiException('Token did not refresh correctly. Access token not returned.');
@@ -691,12 +692,12 @@ class Auth0
      *
      * @throws InvalidTokenException
      */
-    public function decodeIdToken(string $idToken, array $verifierOptions = []) : array
+    public function decodeIdToken(string $idToken, array $verifierOptions = []): array
     {
-        $idTokenIss  = 'https://'.$this->domain.'/';
+        $idTokenIss  = 'https://' . $this->domain . '/';
         $sigVerifier = null;
         if ('RS256' === $this->idTokenAlg) {
-            $jwksHttpOptions = array_merge( $this->guzzleOptions, [ 'base_uri' => $this->jwksUri ] );
+            $jwksHttpOptions = array_merge($this->guzzleOptions, ['base_uri' => $this->jwksUri]);
             $jwksFetcher     = new JWKFetcher($this->cacheHandler, $jwksHttpOptions);
             $sigVerifier     = new AsymmetricVerifier($jwksFetcher);
         } else if ('HS256' === $this->idTokenAlg) {
@@ -778,8 +779,8 @@ class Auth0
     {
         if ($invite = $this->getInvitationParameters()) {
             $this->login(null, null, [
-              'invitation'   => $invite->invitation,
-              'organization' => $invite->organization
+                'invitation'   => $invite->invitation,
+                'organization' => $invite->organization
             ]);
         }
     }
@@ -871,7 +872,7 @@ class Auth0
      *
      * @return string
      */
-    public static function getNonce(int $length = 16) : string
+    public static function getNonce(int $length = 16): string
     {
         try {
             $random_bytes = random_bytes($length);
@@ -889,7 +890,7 @@ class Auth0
      *
      * @return string
      */
-    public static function urlSafeBase64Decode(string $input) : string
+    public static function urlSafeBase64Decode(string $input): string
     {
         $remainder = strlen($input) % 4;
         if ($remainder) {
